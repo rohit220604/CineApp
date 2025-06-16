@@ -5,22 +5,27 @@ import Home from "./components/Home";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import ForgotPassword from "./components/ForgotPassword";
+import Profile from "./components/Profile";
+import { AuthProvider } from "./components/AuthContext";
 
 function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen bg-[#101624]">
-        <Navbar />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <AuthProvider>
+        <div className="flex flex-col min-h-screen bg-[#101624]">
+          <Navbar />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </AuthProvider>
     </Router>
   );
 }

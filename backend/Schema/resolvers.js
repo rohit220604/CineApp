@@ -127,7 +127,6 @@ module.exports = {
 
   Review: {
     user: async (parent, _, { User }) => {
-      // Always return a fresh promise, not a reused query
       return await User.findById(parent.user);
     },
   },

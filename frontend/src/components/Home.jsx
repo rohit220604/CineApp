@@ -7,6 +7,7 @@ const Home = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [actionStatus, setActionStatus] = useState({}); // { [movieId]: "Saved!" }
   const loader = useRef(null);
 
   const fetchMovies = useCallback(async () => {
@@ -51,6 +52,105 @@ const Home = () => {
     };
   }, [hasMore, loading]);
 
+  // --- Backend Actions ---
+  const sendToBackend = async (mutation, variables, movieId, successMsg) => {
+    setActionStatus((prev) => ({ ...prev, [movieId]: "Loading..." }));
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("http://localhost:4000/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          query: mutation,
+          variables,
+        }),
+      });
+      const { data, errors } = await res.json();
+      if (errors && errors.length > 0) {
+        setActionStatus((prev) => ({
+          ...prev,
+          [movieId]: `Error: ${errors[0].message}`,
+        }));
+      } else {
+        setActionStatus((prev) => ({
+          ...prev,
+          [movieId]: successMsg,
+        }));
+      }
+      setTimeout(() => {
+        setActionStatus((prev) => ({ ...prev, [movieId]: "" }));
+      }, 2000);
+    } catch (err) {
+      setActionStatus((prev) => ({
+        ...prev,
+        [movieId]: "Network error",
+      }));
+    }
+  };
+
+  // Save for later
+  const handleSave = (movie) => {
+    sendToBackend(
+      `mutation SaveForLater($tmdbId: Int!) {
+  saveForLater(tmdbId: $tmdbId)
+}
+`,
+      {
+        tmdbId: movie.id,
+        title: movie.title,
+        poster: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : "",
+        year: movie.release_date ? parseInt(movie.release_date.slice(0, 4)) : null,
+      },
+      movie.id,
+      "Saved!"
+    );
+  };
+
+  // Mark as watched
+  const handleWatchLater = (movie) => {
+    sendToBackend(
+      `mutation MarkAsWatched($tmdbId: Int!) {
+  markAsWatched(tmdbId: $tmdbId)
+}
+`,
+      {
+        tmdbId: movie.id,
+        title: movie.title,
+        poster: movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : "",
+        year: movie.release_date ? parseInt(movie.release_date.slice(0, 4)) : null,
+      },
+      movie.id,
+      "Marked as Watched!"
+    );
+  };
+
+  // Add review (simple demo: just a default review, you can expand this)
+  const handleReview = (movie) => {
+    const comment = prompt("Write your review for " + movie.title + ":");
+    if (!comment) return;
+    sendToBackend(
+      `mutation AddReview($tmdbId: Int!, $rating: Int!, $comment: String!) {
+        addReview(tmdbId: $tmdbId, rating: $rating, comment: $comment) {
+          id
+        }
+      }`,
+      {
+        tmdbId: movie.id,
+        rating: 5, // You can make this dynamic
+        comment,
+      },
+      movie.id,
+      "Review Added!"
+    );
+  };
+
   return (
     <div className="bg-[#101624] min-h-screen px-4 py-8">
       <h1 className="text-3xl font-bold text-blue-400 mb-6">Popular Movies</h1>
@@ -77,15 +177,29 @@ const Home = () => {
                 {movie.release_date ? movie.release_date.slice(0, 4) : "N/A"}
               </p>
               <div className="mt-auto flex space-x-2">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm">
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm"
+                  onClick={() => handleSave(movie)}
+                >
                   Save
                 </button>
-                <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm">
+                <button
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm"
+                  onClick={() => handleWatchLater(movie)}
+                >
                   Watch Later
                 </button>
-                <button className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded transition text-sm">
+                <button
+                  className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded transition text-sm"
+                  onClick={() => handleReview(movie)}
+                >
                   Review
                 </button>
+              </div>
+              <div className="mt-2 min-h-[20px]">
+                {actionStatus[movie.id] && (
+                  <span className="text-xs text-green-400">{actionStatus[movie.id]}</span>
+                )}
               </div>
             </div>
           </div>

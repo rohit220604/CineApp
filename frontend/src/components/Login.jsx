@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "./AuthContext"; // Adjust the path if needed
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -7,6 +8,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,12 +37,13 @@ const Login = () => {
       });
 
       const { data, errors } = await response.json();
-
+      console.log("Login response:", { data, errors });
+      
       if (errors && errors.length > 0) {
         setError(errors[0].message);
       } else if (data && data.login) {
-        localStorage.setItem("token", data.login.token);
-        // Redirect to home or dashboard after login
+        // Update AuthContext and localStorage
+        login(data.login.token, data.login.user);
         navigate("/");
       } else {
         setError("Unexpected error. Please try again.");

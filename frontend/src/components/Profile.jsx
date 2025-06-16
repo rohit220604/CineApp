@@ -1,22 +1,7 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { AuthContext } from "./AuthContext";
 
-// Dummy user data
-const profile = {
-  username: "MovieBuff123",
-  avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-  watchlist: [
-    { id: 1, title: "Inception", year: 2010, poster: "https://image.tmdb.org/t/p/w200/8s4h9friP6Ci3adRGahHARVd76E.jpg" },
-    { id: 2, title: "Interstellar", year: 2014, poster: "https://image.tmdb.org/t/p/w200/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg" }
-  ],
-  watched: [
-    { id: 3, title: "The Matrix", year: 1999, poster: "https://image.tmdb.org/t/p/w200/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg" },
-    { id: 4, title: "The Godfather", year: 1972, poster: "https://image.tmdb.org/t/p/w200/3bhkrj58Vtu7enYsRolD1fZdja1.jpg" }
-  ],
-  reviews: [
-    { id: 3, title: "The Matrix", year: 1999, poster: "https://image.tmdb.org/t/p/w200/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg", review: "Amazing sci-fi classic!" },
-    { id: 5, title: "Parasite", year: 2019, poster: "https://image.tmdb.org/t/p/w200/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", review: "Masterpiece!" }
-  ]
-};
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 const Section = ({ title, children }) => (
   <div className="mb-8">
@@ -25,85 +10,211 @@ const Section = ({ title, children }) => (
   </div>
 );
 
-const MovieCard = ({ movie, extra }) => (
+const MovieItem = ({ movie, extra }) => (
   <div className="bg-gray-900 rounded-lg shadow-lg overflow-hidden flex flex-col w-44">
     <img
-      src={movie.poster}
+      src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "https://via.placeholder.com/500x750?text=No+Image"}
       alt={movie.title}
       className="h-60 object-cover w-full"
     />
     <div className="p-3 flex flex-col flex-1">
       <h3 className="text-base font-semibold text-white mb-1">{movie.title}</h3>
-      <p className="text-xs text-gray-400 mb-2">{movie.year}</p>
+      <p className="text-xs text-gray-400 mb-2">{movie.release_date ? movie.release_date.slice(0, 4) : "N/A"}</p>
       {extra}
     </div>
   </div>
 );
 
-const Profile = () => (
-  <div className="bg-[#101624] min-h-screen px-4 py-8">
-    {/* Profile Header */}
-    <div className="flex items-center mb-10">
-      <img
-        src={profile.avatar}
-        alt={profile.username}
-        className="w-16 h-16 rounded-full border-4 border-blue-400 mr-4"
-      />
-      <div>
-        <h1 className="text-3xl font-bold text-blue-400">{profile.username}</h1>
-        <div className="text-gray-400 mt-1 text-sm">
-          Watchlist: {profile.watchlist.length} &nbsp;|&nbsp; Watched: {profile.watched.length} &nbsp;|&nbsp; Reviews: {profile.reviews.length}
+const Profile = () => {
+  const { user } = useContext(AuthContext);
+  const [profile, setProfile] = useState(null);
+  const [savedMovies, setSavedMovies] = useState([]);
+  const [watchedMovies, setWatchedMovies] = useState([]);
+  const [reviewMovies, setReviewMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch profile from backend
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:4000/graphql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            query: `
+              query {
+                me {
+                  name
+                  savedMovies
+                  watchedMovies
+                }
+                myReviews {
+                  tmdbId
+                  rating
+                  comment
+                  createdAt
+                }
+              }
+            `,
+          }),
+        });
+        const { data, errors } = await response.json();
+        if (errors?.length) {
+          setError(errors[0].message);
+        } else if (data) {
+          setProfile({
+            ...data.me,
+            reviews: data.myReviews
+          });
+        }
+      } catch (err) {
+        setError("Network error. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // Fetch movie details from TMDB for saved, watched, and reviewed movies
+  useEffect(() => {
+    const fetchMoviesByIds = async (ids, setter) => {
+      if (!ids || ids.length === 0) {
+        setter([]);
+        return;
+      }
+      try {
+        const movies = await Promise.all(
+          ids.map(async (id) => {
+            const res = await fetch(
+              `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=en-US`
+            );
+            if (!res.ok) return null;
+            return await res.json();
+          })
+        );
+        setter(movies.filter(Boolean));
+      } catch {
+        setter([]);
+      }
+    };
+
+    if (profile) {
+      fetchMoviesByIds(profile.savedMovies, setSavedMovies);
+      fetchMoviesByIds(profile.watchedMovies, setWatchedMovies);
+
+      // For reviews, fetch movie details for each tmdbId in reviews
+      if (profile.reviews && profile.reviews.length > 0) {
+        const reviewIds = profile.reviews.map(r => r.tmdbId);
+        fetchMoviesByIds(reviewIds, setReviewMovies);
+      } else {
+        setReviewMovies([]);
+      }
+    }
+  }, [profile]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#101624]">
+        <div className="text-blue-400 text-xl">Loading profile...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#101624]">
+        <div className="text-red-400 text-xl">{error}</div>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  return (
+    <div className="bg-[#101624] min-h-screen px-4 py-8">
+      {/* Profile Header */}
+      <div className="flex items-center mb-10">
+        <div className="w-16 h-16 rounded-full border-4 border-blue-400 mr-4 bg-gray-800 flex items-center justify-center">
+          <span className="text-white text-xl">
+            {profile.name.charAt(0).toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-blue-400">{profile.name}</h1>
+          <div className="text-gray-400 mt-1 text-sm">
+            Saved: {profile.savedMovies?.length || 0} &nbsp;|&nbsp; 
+            Watched: {profile.watchedMovies?.length || 0} &nbsp;|&nbsp; 
+            Reviews: {profile.reviews?.length || 0}
+          </div>
         </div>
       </div>
+
+      {/* Saved Movies */}
+      <Section title="Saved Movies">
+        <div className="flex flex-wrap gap-6">
+          {profile.savedMovies?.length === 0 ? (
+            <div className="text-gray-400">No saved movies.</div>
+          ) : savedMovies.length === 0 ? (
+            <div className="text-gray-400">Loading saved movies...</div>
+          ) : (
+            savedMovies.map(movie => (
+              <MovieItem key={movie.id} movie={movie} />
+            ))
+          )}
+        </div>
+      </Section>
+
+      {/* Watched Movies */}
+      <Section title="Watched Movies">
+        <div className="flex flex-wrap gap-6">
+          {profile.watchedMovies?.length === 0 ? (
+            <div className="text-gray-400">No watched movies.</div>
+          ) : watchedMovies.length === 0 ? (
+            <div className="text-gray-400">Loading watched movies...</div>
+          ) : (
+            watchedMovies.map(movie => (
+              <MovieItem key={movie.id} movie={movie} />
+            ))
+          )}
+        </div>
+      </Section>
+
+      {/* Reviews */}
+      <Section title="Your Reviews">
+        <div className="flex flex-wrap gap-6">
+          {profile.reviews?.length === 0 ? (
+            <div className="text-gray-400">No reviews yet.</div>
+          ) : reviewMovies.length === 0 ? (
+            <div className="text-gray-400">Loading review movies...</div>
+          ) : (
+            profile.reviews.map((review, index) => {
+              const movie = reviewMovies.find(m => m && m.id === review.tmdbId);
+              return movie ? (
+                <MovieItem
+                  key={`${review.tmdbId}-${index}`}
+                  movie={movie}
+                  extra={
+                    <div className="mt-2 text-sm text-yellow-400">
+                      <div>Rating: {review.rating}/5</div>
+                      <div>{review.comment}</div>
+                    </div>
+                  }
+                />
+              ) : null;
+            })
+          )}
+        </div>
+      </Section>
     </div>
-
-    {/* Watchlist */}
-    <Section title="Watchlist">
-      <div className="flex flex-wrap gap-6">
-        {profile.watchlist.length === 0 ? (
-          <div className="text-gray-400">No movies in your watchlist.</div>
-        ) : (
-          profile.watchlist.map(movie => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))
-        )}
-      </div>
-    </Section>
-
-    {/* Watched Movies */}
-    <Section title="Watched Movies">
-      <div className="flex flex-wrap gap-6">
-        {profile.watched.length === 0 ? (
-          <div className="text-gray-400">No watched movies yet.</div>
-        ) : (
-          profile.watched.map(movie => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))
-        )}
-      </div>
-    </Section>
-
-    {/* Reviews */}
-    <Section title="Your Reviews">
-      <div className="flex flex-wrap gap-6">
-        {profile.reviews.length === 0 ? (
-          <div className="text-gray-400">No reviews yet.</div>
-        ) : (
-          profile.reviews.map(movie => (
-            <MovieCard
-              key={movie.id}
-              movie={movie}
-              extra={
-                <div className="mt-2 text-sm text-yellow-400 font-medium">
-                  {movie.review}
-                </div>
-              }
-            />
-          ))
-        )}
-      </div>
-    </Section>
-  </div>
-);
+  );
+};
 
 export default Profile;
