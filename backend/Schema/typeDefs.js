@@ -1,27 +1,47 @@
 const { gql } = require("apollo-server-express");
 
 module.exports = gql`
-  type User {
-    id: ID!
-    name: String!
-    email: String!
-    isVerified: Boolean!
-  }
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  isVerified: Boolean!
+  watchedMovies: [Int!]!
+  savedMovies: [Int!]!
+}
 
-  type AuthPayload {
-    token: String
-    user: User
-  }
+type AuthPayload {
+  token: String!
+  user: User!
+}
 
-  type Query {
-    me: User
-  }
+type Review {
+  id: ID!
+  user: User!
+  tmdbId: Int!
+  rating: Int!
+  comment: String
+  createdAt: String!
+}
 
-  type Mutation {
-    register(name: String!, email: String!, password: String!): String
-    verifyOTP(email: String!, otp: String!): String
-    login(email: String!, password: String!): AuthPayload
-    forgotPassword(email: String!): String
-    resetPassword(email: String!, otp: String!, newPassword: String!): String
-  }
+type Query {
+  me: User
+  myReviews: [Review!]!
+  myWatchedMovies: [Int!]!
+  mySavedMovies: [Int!]!
+  reviewsForMovie(tmdbId: Int!): [Review!]!
+}
+
+type Mutation {
+  register(name: String!, email: String!, password: String!): Boolean!
+  verifyOTP(email: String!, otp: String!): Boolean!
+  login(email: String!, password: String!): AuthPayload!
+  forgotPassword(email: String!): Boolean!
+  resetPassword(email: String!, otp: String!, newPassword: String!): Boolean!
+
+  saveForLater(tmdbId: Int!): Boolean!
+  markAsWatched(tmdbId: Int!): Boolean!
+  removeFromSaved(tmdbId: Int!): Boolean!
+  addReview(tmdbId: Int!, rating: Int!, comment: String): Review!
+}
 `;

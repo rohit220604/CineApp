@@ -7,8 +7,17 @@ const typeDefs = require("./Schema/typeDefs");
 const resolvers = require("./Schema/resolvers");
 const jwt = require("jsonwebtoken");
 
+// Importing models
+const User = require("./models/User");
+const Review = require("./models/Review");
+
 const app = express();
-app.use(cors({ origin: true, credentials: true }));
+
+//CORS configuration
+app.use(cors({
+  origin: true,
+  credentials: true 
+}));
 
 const getUser = (token) => {
   try {
@@ -28,16 +37,34 @@ async function startServer() {
     context: ({ req }) => {
       const token = req.headers.authorization || "";
       const user = getUser(token.replace("Bearer ", ""));
-      return { user };
+      return {
+        user,
+        User,
+        Review
+      };
     },
+    introspection: true,
+    playground: true
   });
+
   await server.start();
   server.applyMiddleware({ app, cors: false });
 
-  await mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  app.listen(4000, () => {
-    console.log("Server running at http://localhost:4000" + server.graphqlPath);
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("Connected to MongoDB");
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  }
+
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}${server.graphqlPath}`);
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error("Server startup error:", err);
+  process.exit(1);
+});

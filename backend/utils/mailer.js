@@ -9,9 +9,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Generate cryptographically secure 6-digit OTP
 const generateOtp = () => {
-  return crypto.randomInt(100000, 1000000).toString(); // 100000-999999 inclusive
+  return crypto.randomInt(100000, 1000000).toString(); 
 };
 
 exports.sendOtpMail = async (to) => {
@@ -22,5 +21,5 @@ exports.sendOtpMail = async (to) => {
     subject: "Your CineApp OTP Code",
     html: `<p>Your OTP code is <b>${otp}</b>. It is valid for 10 minutes.</p>`,
   });
-  return otp; // Return generated OTP for database storage
+  return otp; 
 };
