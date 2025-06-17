@@ -42,6 +42,7 @@ type Mutation {
   saveForLater(tmdbId: Int!): Boolean!
   markAsWatched(tmdbId: Int!): Boolean!
   removeFromSaved(tmdbId: Int!): Boolean!
+  removeFromWatched(tmdbId: Int!): Boolean!
   addReview(tmdbId: Int!, rating: Int!, comment: String): Review!
 }
 `;

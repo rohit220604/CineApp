@@ -111,6 +111,12 @@ module.exports = {
       return true;
     },
 
+    removeFromWatched: async (_, { tmdbId }, { user }) => {
+      if (!user) throw new Error("Not authenticated");
+      await User.findByIdAndUpdate(user.id, { $pull: { watchedMovies: tmdbId } });
+      return true;
+    }, 
+
     addReview: async (_, { tmdbId, rating, comment }, { user }) => {
       if (!user) throw new Error("Not authenticated");
       const review = await Review.create({

@@ -35,6 +35,21 @@ const Navbar = () => {
             Home
           </Link>
         </div>
+        <div className="ml-8">
+          <Link
+            to="/about"
+            className="flex items-center text-base font-medium text-gray-200 hover:text-blue-400 transition px-3 py-1 rounded hover:bg-[#1e2636]"
+          >
+            <svg
+              className="w-5 h-5 mr-1 text-blue-300"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2c0-2.66-5.33-4-8-4z" />
+            </svg>
+            About Us
+          </Link>
+        </div>
       </div>
 
       {/* Right: Login or User Dropdown */}

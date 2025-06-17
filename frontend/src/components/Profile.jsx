@@ -10,7 +10,7 @@ const Section = ({ title, children }) => (
   </div>
 );
 
-const MovieItem = ({ movie, extra }) => (
+const MovieItem = ({ movie, extra, removeHandler }) => (
   <div className="bg-gray-900 rounded-lg shadow-lg overflow-hidden flex flex-col w-44">
     <img
       src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "https://via.placeholder.com/500x750?text=No+Image"}
@@ -21,6 +21,14 @@ const MovieItem = ({ movie, extra }) => (
       <h3 className="text-base font-semibold text-white mb-1">{movie.title}</h3>
       <p className="text-xs text-gray-400 mb-2">{movie.release_date ? movie.release_date.slice(0, 4) : "N/A"}</p>
       {extra}
+      {removeHandler && (
+        <button
+          onClick={removeHandler}
+          className="mt-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600"
+        >
+          Remove
+        </button>
+      )}
     </div>
   </div>
 );
@@ -120,6 +128,54 @@ const Profile = () => {
     }
   }, [profile]);
 
+  // Remove from Saved
+  const removeFromSaved = async (tmdbId) => {
+    const token = localStorage.getItem("token");
+    await fetch("http://localhost:4000/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: `
+          mutation($tmdbId: Int!) {
+            removeFromSaved(tmdbId: $tmdbId)
+          }
+        `,
+        variables: { tmdbId },
+      }),
+    });
+    setProfile(prev => ({
+      ...prev,
+      savedMovies: prev.savedMovies.filter(id => id !== tmdbId),
+    }));
+  };
+
+  // Remove from Watched
+  const removeFromWatched = async (tmdbId) => {
+    const token = localStorage.getItem("token");
+    await fetch("http://localhost:4000/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: `
+          mutation($tmdbId: Int!) {
+            removeFromWatched(tmdbId: $tmdbId)
+          }
+        `,
+        variables: { tmdbId },
+      }),
+    });
+    setProfile(prev => ({
+      ...prev,
+      watchedMovies: prev.watchedMovies.filter(id => id !== tmdbId),
+    }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#101624]">
@@ -166,7 +222,11 @@ const Profile = () => {
             <div className="text-gray-400">Loading saved movies...</div>
           ) : (
             savedMovies.map(movie => (
-              <MovieItem key={movie.id} movie={movie} />
+              <MovieItem
+                key={movie.id}
+                movie={movie}
+                removeHandler={() => removeFromSaved(movie.id)}
+              />
             ))
           )}
         </div>
@@ -181,7 +241,11 @@ const Profile = () => {
             <div className="text-gray-400">Loading watched movies...</div>
           ) : (
             watchedMovies.map(movie => (
-              <MovieItem key={movie.id} movie={movie} />
+              <MovieItem
+                key={movie.id}
+                movie={movie}
+                removeHandler={() => removeFromWatched(movie.id)}
+              />
             ))
           )}
         </div>

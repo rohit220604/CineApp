@@ -7,7 +7,10 @@ const Home = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [actionStatus, setActionStatus] = useState({}); // { [movieId]: "Saved!" }
+  const [actionStatus, setActionStatus] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const loader = useRef(null);
 
   const fetchMovies = useCallback(async () => {
@@ -31,11 +34,11 @@ const Home = () => {
   }, [page, loading, hasMore]);
 
   useEffect(() => {
-    fetchMovies();
-  }, [page]);
+    if (!searching) fetchMovies();
+  }, [page, searching]);
 
   useEffect(() => {
-    if (!hasMore || loading) return;
+    if (!hasMore || loading || searching) return;
     const observer = new window.IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -50,7 +53,7 @@ const Home = () => {
     return () => {
       if (loader.current) observer.unobserve(loader.current);
     };
-  }, [hasMore, loading]);
+  }, [hasMore, loading, searching]);
 
   // --- Backend Actions ---
   const sendToBackend = async (mutation, variables, movieId, successMsg) => {
@@ -95,9 +98,8 @@ const Home = () => {
   const handleSave = (movie) => {
     sendToBackend(
       `mutation SaveForLater($tmdbId: Int!) {
-  saveForLater(tmdbId: $tmdbId)
-}
-`,
+        saveForLater(tmdbId: $tmdbId)
+      }`,
       {
         tmdbId: movie.id,
         title: movie.title,
@@ -115,9 +117,8 @@ const Home = () => {
   const handleWatchLater = (movie) => {
     sendToBackend(
       `mutation MarkAsWatched($tmdbId: Int!) {
-  markAsWatched(tmdbId: $tmdbId)
-}
-`,
+        markAsWatched(tmdbId: $tmdbId)
+      }`,
       {
         tmdbId: movie.id,
         title: movie.title,
@@ -131,7 +132,7 @@ const Home = () => {
     );
   };
 
-  // Add review (simple demo: just a default review, you can expand this)
+  // Add review
   const handleReview = (movie) => {
     const comment = prompt("Write your review for " + movie.title + ":");
     if (!comment) return;
@@ -143,7 +144,7 @@ const Home = () => {
       }`,
       {
         tmdbId: movie.id,
-        rating: 5, // You can make this dynamic
+        rating: 5,
         comment,
       },
       movie.id,
@@ -151,11 +152,72 @@ const Home = () => {
     );
   };
 
+  // --- Search Handler ---
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(
+          searchQuery
+        )}&page=1`
+      );
+      const data = await res.json();
+      setSearchResults(data.results || []);
+    } catch (err) {
+      setSearchResults([]);
+    }
+    setLoading(false);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setSearching(false);
+    setPage(1);
+  };
+
+  // --- Render ---
   return (
     <div className="bg-[#101624] min-h-screen px-4 py-8">
-      <h1 className="text-3xl font-bold text-blue-400 mb-6">Popular Movies</h1>
+      <div className="flex items-center mb-8 gap-4 justify-between flex-wrap">
+        <h1 className="text-3xl font-bold text-blue-400 whitespace-nowrap">
+          Popular Movies
+        </h1>
+        <form
+          className="flex gap-2"
+          onSubmit={handleSearch}
+          autoComplete="off"
+          style={{ minWidth: 0 }}
+        >
+          <input
+            type="text"
+            placeholder="Search movies"
+            className="px-3 py-2 rounded bg-gray-800 text-white w-64 outline-none"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Search
+          </button>
+          {searching && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+            >
+              Clear
+            </button>
+          )}
+        </form>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {movies.map((movie) => (
+        {(searching ? searchResults : movies).map((movie) => (
           <div
             key={movie.id}
             className="bg-gray-900 rounded-lg shadow-lg overflow-hidden flex flex-col"
@@ -206,10 +268,15 @@ const Home = () => {
         ))}
       </div>
 
-      <div ref={loader} className="flex justify-center py-8">
-        {loading && <span className="text-gray-300">Loading more movies...</span>}
-        {!hasMore && <span className="text-gray-500">No more movies to load.</span>}
-      </div>
+      {!searching && (
+        <div ref={loader} className="flex justify-center py-8">
+          {loading && <span className="text-gray-300">Loading more movies...</span>}
+          {!hasMore && <span className="text-gray-500">No more movies to load.</span>}
+        </div>
+      )}
+      {searching && !loading && searchResults.length === 0 && (
+        <div className="text-gray-400 text-center mt-8">No results found.</div>
+      )}
     </div>
   );
 };

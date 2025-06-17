@@ -7,6 +7,7 @@ import Register from "./components/Register";
 import ForgotPassword from "./components/ForgotPassword";
 import Profile from "./components/Profile";
 import { AuthProvider } from "./components/AuthContext";
+import AboutUs from "./components/AboutUs";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/about" element={<AboutUs />} />
             </Routes>
           </main>
           <Footer />
