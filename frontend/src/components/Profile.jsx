@@ -206,15 +206,14 @@ const Profile = () => {
         <div>
           <h1 className="text-3xl font-bold text-blue-400">{profile.name}</h1>
           <div className="text-gray-400 mt-1 text-sm">
-            Saved: {profile.savedMovies?.length || 0} &nbsp;|&nbsp; 
+            Watch later: {profile.savedMovies?.length || 0} &nbsp;|&nbsp; 
             Watched: {profile.watchedMovies?.length || 0} &nbsp;|&nbsp; 
             Reviews: {profile.reviews?.length || 0}
           </div>
         </div>
       </div>
 
-      {/* Saved Movies */}
-      <Section title="Saved Movies">
+      <Section title="Saved">
         <div className="flex flex-wrap gap-6">
           {profile.savedMovies?.length === 0 ? (
             <div className="text-gray-400">No saved movies.</div>
@@ -233,7 +232,7 @@ const Profile = () => {
       </Section>
 
       {/* Watched Movies */}
-      <Section title="Watched Movies">
+      <Section title="Watched">
         <div className="flex flex-wrap gap-6">
           {profile.watchedMovies?.length === 0 ? (
             <div className="text-gray-400">No watched movies.</div>

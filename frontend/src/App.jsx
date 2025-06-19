@@ -8,6 +8,7 @@ import ForgotPassword from "./components/ForgotPassword";
 import Profile from "./components/Profile";
 import { AuthProvider } from "./components/AuthContext";
 import AboutUs from "./components/AboutUs";
+import MovieDetail from "./components/MovieDetail";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/about" element={<AboutUs />} />
+              <Route path="/movies/:id" element={<MovieDetail />} />
             </Routes>
           </main>
           <Footer />

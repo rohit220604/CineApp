@@ -2,7 +2,7 @@ import React from "react";
 
 const AboutUs = () => (
   <div className="bg-[#101624] min-h-screen px-4 py-10 flex flex-col items-center">
-    <div className="max-w-2xl w-full bg-gray-900 rounded-lg shadow-lg p-8">
+    <div className="w-full max-w-6xl bg-gray-900 rounded-lg shadow-lg p-10">
       <h1 className="text-4xl font-bold text-blue-400 mb-4 text-center">About CineApp</h1>
       <p className="text-gray-300 text-lg mb-6 text-center">
         CineApp is your all-in-one platform for discovering, tracking, and sharing your love of movies. 

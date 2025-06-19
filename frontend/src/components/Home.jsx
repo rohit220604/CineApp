@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import { Link } from "react-router-dom";
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -12,7 +13,10 @@ const Home = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const loader = useRef(null);
+  const [watchedMovies, setWatchedMovies] = useState(new Set());
+  const [savedMovies, setSavedMovies] = useState(new Set());
 
+  // Fetch movies
   const fetchMovies = useCallback(async () => {
     if (loading || !hasMore) return;
     setLoading(true);
@@ -111,10 +115,40 @@ const Home = () => {
       movie.id,
       "Saved!"
     );
+    setSavedMovies(prev => new Set(prev).add(movie.id));
+  };
+
+  // Unsave a movie
+  const handleUnsave = async (movie) => {
+    const token = localStorage.getItem("token");
+    try {
+      await fetch("http://localhost:4000/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            mutation($tmdbId: Int!) {
+              removeFromSaved(tmdbId: $tmdbId)
+            }
+          `,
+          variables: { tmdbId: movie.id },
+        }),
+      });
+      setSavedMovies(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(movie.id);
+        return newSet;
+      });
+    } catch (error) {
+      console.error("Failed to unsave:", error);
+    }
   };
 
   // Mark as watched
-  const handleWatchLater = (movie) => {
+  const handlewatched = (movie) => {
     sendToBackend(
       `mutation MarkAsWatched($tmdbId: Int!) {
         markAsWatched(tmdbId: $tmdbId)
@@ -130,26 +164,36 @@ const Home = () => {
       movie.id,
       "Marked as Watched!"
     );
+    setWatchedMovies(prev => new Set(prev).add(movie.id));
   };
 
-  // Add review
-  const handleReview = (movie) => {
-    const comment = prompt("Write your review for " + movie.title + ":");
-    if (!comment) return;
-    sendToBackend(
-      `mutation AddReview($tmdbId: Int!, $rating: Int!, $comment: String!) {
-        addReview(tmdbId: $tmdbId, rating: $rating, comment: $comment) {
-          id
-        }
-      }`,
-      {
-        tmdbId: movie.id,
-        rating: 5,
-        comment,
-      },
-      movie.id,
-      "Review Added!"
-    );
+  // Unmark as Watched
+  const removeFromWatched = async (movie) => {
+    const token = localStorage.getItem("token");
+    try {
+      await fetch("http://localhost:4000/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            mutation($tmdbId: Int!) {
+              removeFromWatched(tmdbId: $tmdbId)
+            }
+          `,
+          variables: { tmdbId: movie.id },
+        }),
+      });
+      setWatchedMovies(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(movie.id);
+        return newSet;
+      });
+    } catch (error) {
+      console.error("Failed to remove from watched:", error);
+    }
   };
 
   // --- Search Handler ---
@@ -218,9 +262,11 @@ const Home = () => {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {(searching ? searchResults : movies).map((movie) => (
-          <div
+          <Link
+            to={`/movies/${movie.id}`}
             key={movie.id}
-            className="bg-gray-900 rounded-lg shadow-lg overflow-hidden flex flex-col"
+            className="bg-gray-900 rounded-lg shadow-lg overflow-hidden flex flex-col hover:shadow-blue-500 transition-shadow"
+            style={{ textDecoration: "none" }}
           >
             <img
               src={
@@ -239,24 +285,53 @@ const Home = () => {
                 {movie.release_date ? movie.release_date.slice(0, 4) : "N/A"}
               </p>
               <div className="mt-auto flex space-x-2">
-                <button
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm"
-                  onClick={() => handleSave(movie)}
-                >
-                  Save
-                </button>
-                <button
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm"
-                  onClick={() => handleWatchLater(movie)}
-                >
-                  Watch Later
-                </button>
-                <button
-                  className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded transition text-sm"
-                  onClick={() => handleReview(movie)}
-                >
-                  Review
-                </button>
+                {savedMovies.has(movie.id) ? (
+                  <button
+                    className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1 rounded transition text-sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleUnsave(movie);
+                    }}
+                  >
+                    Unsave
+                  </button>
+                ) : (
+                  <button
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSave(movie);
+                    }}
+                  >
+                    Save
+                  </button>
+                )}
+
+                {watchedMovies.has(movie.id) ? (
+                  <button
+                    className="bg-yellow-700 hover:bg-yellow-800 text-white px-3 py-1 rounded transition text-sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeFromWatched(movie);
+                    }}
+                  >
+                    Unmark as Watched
+                  </button>
+                ) : (
+                  <button
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handlewatched(movie);
+                    }}
+                  >
+                    Watched
+                  </button>
+                )}
               </div>
               <div className="mt-2 min-h-[20px]">
                 {actionStatus[movie.id] && (
@@ -264,7 +339,7 @@ const Home = () => {
                 )}
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
