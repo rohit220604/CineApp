@@ -59,7 +59,7 @@ const Profile = () => {
             query: `
               query {
                 me {
-                  name
+                  username
                   savedMovies
                   watchedMovies
                 }
@@ -200,11 +200,11 @@ const Profile = () => {
       <div className="flex items-center mb-10">
         <div className="w-16 h-16 rounded-full border-4 border-blue-400 mr-4 bg-gray-800 flex items-center justify-center">
           <span className="text-white text-xl">
-            {profile.name.charAt(0).toUpperCase()}
+            {profile.username.charAt(0).toUpperCase()}
           </span>
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-blue-400">{profile.name}</h1>
+          <h1 className="text-3xl font-bold text-blue-400">{profile.username}</h1>
           <div className="text-gray-400 mt-1 text-sm">
             Watch later: {profile.savedMovies?.length || 0} &nbsp;|&nbsp; 
             Watched: {profile.watchedMovies?.length || 0} &nbsp;|&nbsp; 

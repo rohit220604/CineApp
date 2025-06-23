@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "./AuthContext"; // adjust path as needed
+import { AuthContext } from "./AuthContext"; 
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -68,7 +68,7 @@ const Navbar = () => {
               className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-lg focus:outline-none"
               aria-label="User menu"
             >
-              {user.name.charAt(0).toUpperCase()}
+              {user.username.charAt(0).toUpperCase()}
             </button>
             {dropdownOpen && (
               <div
@@ -76,11 +76,18 @@ const Navbar = () => {
                 onMouseLeave={() => setDropdownOpen(false)}
               >
                 <Link
-                  to="/profile"
+                  to="/user-profile"
                   className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
                   onClick={() => setDropdownOpen(false)}
                 >
                   View Profile
+                </Link>
+                <Link
+                  to="/profile"
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  View Movie
                 </Link>
                 <button
                   onClick={logout}

@@ -67,7 +67,7 @@ function MovieDetail() {
               rating
               comment
               createdAt
-              user { name }
+              user { username }
             }
           }
         `,
@@ -262,7 +262,7 @@ function MovieDetail() {
                 >
                   {/* Username + Stars Row */}
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-yellow-400 font-bold">{review.user.name}</span>
+                    <span className="text-yellow-400 font-bold">{review.user.username}</span>
                     <StarDisplay rating={review.rating} />
                   </div>
                   {/* Timestamp */}

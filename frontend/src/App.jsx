@@ -9,6 +9,8 @@ import Profile from "./components/Profile";
 import { AuthProvider } from "./components/AuthContext";
 import AboutUs from "./components/AboutUs";
 import MovieDetail from "./components/MovieDetail";
+import UserProfile from "./components/UserProfile";
+import Recommended from "./components/Recommended";
 
 function App() {
   return (
@@ -25,6 +27,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/movies/:id" element={<MovieDetail />} />
+              <Route path="user-profile" element={<UserProfile />} />
             </Routes>
           </main>
           <Footer />

@@ -16,6 +16,9 @@ const Home = () => {
   const [watchedMovies, setWatchedMovies] = useState(new Set());
   const [savedMovies, setSavedMovies] = useState(new Set());
 
+  // Check if user is logged in
+  const isLoggedIn = !!localStorage.getItem("token");
+
   // Fetch movies
   const fetchMovies = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -284,55 +287,57 @@ const Home = () => {
               <p className="text-sm text-gray-400 mb-2">
                 {movie.release_date ? movie.release_date.slice(0, 4) : "N/A"}
               </p>
-              <div className="mt-auto flex space-x-2">
-                {savedMovies.has(movie.id) ? (
-                  <button
-                    className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1 rounded transition text-sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleUnsave(movie);
-                    }}
-                  >
-                    Unsave
-                  </button>
-                ) : (
-                  <button
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleSave(movie);
-                    }}
-                  >
-                    Save
-                  </button>
-                )}
+              {isLoggedIn && (
+                <div className="mt-auto flex space-x-2">
+                  {savedMovies.has(movie.id) ? (
+                    <button
+                      className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1 rounded transition text-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleUnsave(movie);
+                      }}
+                    >
+                      Unsave
+                    </button>
+                  ) : (
+                    <button
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSave(movie);
+                      }}
+                    >
+                      Save
+                    </button>
+                  )}
 
-                {watchedMovies.has(movie.id) ? (
-                  <button
-                    className="bg-yellow-700 hover:bg-yellow-800 text-white px-3 py-1 rounded transition text-sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      removeFromWatched(movie);
-                    }}
-                  >
-                    Unmark as Watched
-                  </button>
-                ) : (
-                  <button
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handlewatched(movie);
-                    }}
-                  >
-                    Watched
-                  </button>
-                )}
-              </div>
+                  {watchedMovies.has(movie.id) ? (
+                    <button
+                      className="bg-yellow-700 hover:bg-yellow-800 text-white px-3 py-1 rounded transition text-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        removeFromWatched(movie);
+                      }}
+                    >
+                      Unmark as Watched
+                    </button>
+                  ) : (
+                    <button
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handlewatched(movie);
+                      }}
+                    >
+                      Watched
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="mt-2 min-h-[20px]">
                 {actionStatus[movie.id] && (
                   <span className="text-xs text-green-400">{actionStatus[movie.id]}</span>

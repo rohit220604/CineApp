@@ -3,7 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ name: "", email: "", password: "", otp: "" });
+  const [form, setForm] = useState({
+    name: "",
+    username: "",
+    email: "",
+    password: "",
+    otp: ""
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -24,15 +30,16 @@ const Register = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: `
-            mutation Register($name: String!, $email: String!, $password: String!) {
-              register(name: $name, email: $email, password: $password)
+            mutation Register($name: String!, $email: String!, $password: String!, $username: String!) {
+              register(name: $name, email: $email, password: $password, username: $username)
             }
           `,
           variables: {
             name: form.name,
             email: form.email,
             password: form.password,
-          },
+            username: form.username
+          }
         }),
       });
       const { data, errors } = await response.json();
@@ -68,8 +75,8 @@ const Register = () => {
           `,
           variables: {
             email: form.email,
-            otp: form.otp,
-          },
+            otp: form.otp
+          }
         }),
       });
       const { data, errors } = await response.json();
@@ -98,7 +105,7 @@ const Register = () => {
             {info && <div className="text-green-400 text-center">{info}</div>}
             {loading && <div className="text-blue-400 text-center">Registering...</div>}
             <div>
-              <label className="block text-gray-300 mb-1">Name</label>
+              <label className="block text-gray-300 mb-1">Full Name</label>
               <input
                 name="name"
                 type="text"
@@ -107,6 +114,18 @@ const Register = () => {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="Your Name"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-300 mb-1">Username</label>
+              <input
+                name="username"
+                type="text"
+                required
+                className="w-full px-4 py-2 rounded bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={form.username}
+                onChange={handleChange}
+                placeholder="Unique Username"
               />
             </div>
             <div>

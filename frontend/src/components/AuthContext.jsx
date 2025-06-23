@@ -28,7 +28,7 @@ const fetchUserProfile = async (token) => {
         query: `
             query {
             me {
-                name
+                username
                 email
             }
             }

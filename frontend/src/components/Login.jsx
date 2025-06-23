@@ -25,7 +25,7 @@ const Login = () => {
                 token
                 user {
                   id
-                  name
+                  username
                   email
                   isVerified
                 }
