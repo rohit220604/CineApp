@@ -73,7 +73,20 @@ module.exports = {
         throw new Error("You must be an approved follower to view these movies.");
       }
       return target.savedMovies;
-    },    
+    },  
+    
+    isUsernameAvailable: async (_,{username}) => {
+      const normalized = username.trim().toLowerCase();
+      const existingUser = await User.findOne({ username: normalized });
+      return !existingUser;
+    },
+
+    searchUsers: async (_, { query }) => {
+      if (!query.trim()) return [];
+      return await User.find({
+      username: { $regex: query, $options: "i" }
+      }).limit(10).select("_id username");
+    },
   },
 
   Mutation: {

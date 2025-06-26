@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -13,10 +13,61 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState(null); // null = untouched, true = available, false = taken
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const navigate = useNavigate();
+  const debounceRef = useRef();
+
+  // Debounced username check
+  useEffect(() => {
+    if (!form.username) {
+      setUsernameAvailable(null);
+      setCheckingUsername(false);
+      return;
+    }
+    setCheckingUsername(true);
+    setUsernameAvailable(null);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      checkUsernameAvailability(form.username);
+    }, 500); // 500ms debounce
+    // eslint-disable-next-line
+  }, [form.username]);
+
+  const checkUsernameAvailability = async (username) => {
+    try {
+      const response = await fetch("http://localhost:4000/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: `
+            query IsUsernameAvailable($username: String!) {
+              isUsernameAvailable(username: $username)
+            }
+          `,
+          variables: { username }
+        }),
+      });
+      const { data, errors } = await response.json();
+      if (errors && errors.length > 0) {
+        setUsernameAvailable(null);
+      } else if (data && typeof data.isUsernameAvailable === "boolean") {
+        setUsernameAvailable(data.isUsernameAvailable);
+      } else {
+        setUsernameAvailable(null);
+      }
+    } catch (err) {
+      setUsernameAvailable(null);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (e.target.name === "username") {
+      setUsernameAvailable(null); // reset on change
+    }
   };
 
   const handleRegister = async (e) => {
@@ -24,6 +75,12 @@ const Register = () => {
     setLoading(true);
     setError("");
     setInfo("");
+    // Extra frontend check before submit
+    if (usernameAvailable === false) {
+      setError("Username is already taken. Please choose another.");
+      setLoading(false);
+      return;
+    }
     try {
       const response = await fetch("http://localhost:4000/graphql", {
         method: "POST",
@@ -122,11 +179,29 @@ const Register = () => {
                 name="username"
                 type="text"
                 required
-                className="w-full px-4 py-2 rounded bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={`w-full px-4 py-2 rounded bg-gray-800 text-gray-200 border ${
+                  usernameAvailable === false
+                    ? "border-red-500"
+                    : usernameAvailable === true
+                    ? "border-green-500"
+                    : "border-gray-700"
+                } focus:outline-none focus:ring-2 focus:ring-blue-400`}
                 value={form.username}
                 onChange={handleChange}
                 placeholder="Unique Username"
+                autoComplete="off"
               />
+              <div className="mt-1 text-sm h-5">
+                {checkingUsername && form.username && (
+                  <span className="text-blue-400">Checking availability...</span>
+                )}
+                {!checkingUsername && usernameAvailable === true && form.username && (
+                  <span className="text-green-400">Username is available!</span>
+                )}
+                {!checkingUsername && usernameAvailable === false && form.username && (
+                  <span className="text-red-400">Username is already taken.</span>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-gray-300 mb-1">Email</label>
@@ -155,7 +230,7 @@ const Register = () => {
             <button
               type="submit"
               className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded transition"
-              disabled={loading}
+              disabled={loading || usernameAvailable === false || checkingUsername}
             >
               Register
             </button>

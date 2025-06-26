@@ -40,6 +40,8 @@ type Query {
   pendingFollowRequests: [String!]!
   userWatchedMovies(username: String!): [Int!]!
   userSavedMovies(username: String!): [Int!]!
+  isUsernameAvailable(username: String!): Boolean!
+  searchUsers(query: String!): [User!]!
 }
 
 type Mutation {
