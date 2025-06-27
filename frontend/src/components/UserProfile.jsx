@@ -49,6 +49,19 @@ const REJECT_FOLLOW_REQUEST = `
   }
 `;
 
+// --- Unfollow and Remove Follower Mutations ---
+const UNFOLLOW_MUTATION = `
+  mutation Unfollow($username: String!) {
+    unfollow(username: $username)
+  }
+`;
+
+const REMOVE_FOLLOWER_MUTATION = `
+  mutation RemoveFollower($username: String!) {
+    removeFollower(username: $username)
+  }
+`;
+
 // --- User search query ---
 const SEARCH_USERS_QUERY = `
   query SearchUsers($query: String!) {
@@ -204,6 +217,38 @@ const UserProfile = () => {
     setSearchUsername(username);
   };
 
+  // --- Unfollow someone you are following ---
+  const handleUnfollow = async (username) => {
+    setFollowLoading(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      const res = await fetchGraphQL(UNFOLLOW_MUTATION, { username }, token);
+      if (res.errors) throw new Error(res.errors[0].message);
+      setSuccessMsg(`Unfollowed @${username}`);
+      await fetchAll();
+    } catch (err) {
+      setError(err.message || "Failed to unfollow.");
+    }
+    setFollowLoading(false);
+  };
+
+  // --- Remove a follower from your followers list ---
+  const handleRemoveFollower = async (username) => {
+    setFollowLoading(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      const res = await fetchGraphQL(REMOVE_FOLLOWER_MUTATION, { username }, token);
+      if (res.errors) throw new Error(res.errors[0].message);
+      setSuccessMsg(`Removed @${username} from followers`);
+      await fetchAll();
+    } catch (err) {
+      setError(err.message || "Failed to remove follower.");
+    }
+    setFollowLoading(false);
+  };
+
   // Followers/following as usernames
   const followers = user?.followers || [];
   const following = user?.following || [];
@@ -250,8 +295,39 @@ const UserProfile = () => {
                   <span style={{ color: "#b0b4c0" }}>Followers</span>
                   <div style={{ marginTop: 8 }}>
                     {followers.map((uname) => (
-                      <div key={uname} style={{ fontSize: 15, marginBottom: 2 }}>
-                        <span style={{ color: "#8bb4ff" }}>@{uname}</span>
+                      <div
+                        key={uname}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginBottom: 8,
+                          minHeight: 32,
+                        }}
+                      >
+                        <span style={{ color: "#8bb4ff", minWidth: 120, fontSize: 15 }}>
+                          @{uname}
+                        </span>
+                        {uname !== user.username && (
+                          <button
+                            style={{
+                              marginLeft: 24,
+                              padding: "5px 18px",
+                              borderRadius: 5,
+                              background: "#ff5c5c",
+                              color: "#fff",
+                              border: "none",
+                              cursor: "pointer",
+                              fontWeight: 500,
+                              fontSize: 14,
+                              opacity: followLoading ? 0.7 : 1,
+                              transition: "background 0.2s",
+                            }}
+                            disabled={followLoading}
+                            onClick={() => handleRemoveFollower(uname)}
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -263,8 +339,39 @@ const UserProfile = () => {
                   <span style={{ color: "#b0b4c0" }}>Following</span>
                   <div style={{ marginTop: 8 }}>
                     {following.map((uname) => (
-                      <div key={uname} style={{ fontSize: 15, marginBottom: 2 }}>
-                        <span style={{ color: "#8bb4ff" }}>@{uname}</span>
+                      <div
+                        key={uname}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginBottom: 8,
+                          minHeight: 32,
+                        }}
+                      >
+                        <span style={{ color: "#8bb4ff", minWidth: 120, fontSize: 15 }}>
+                          @{uname}
+                        </span>
+                        {uname !== user.username && (
+                          <button
+                            style={{
+                              marginLeft: 24,
+                              padding: "5px 18px",
+                              borderRadius: 5,
+                              background: "#888",
+                              color: "#fff",
+                              border: "none",
+                              cursor: "pointer",
+                              fontWeight: 500,
+                              fontSize: 14,
+                              opacity: followLoading ? 0.7 : 1,
+                              transition: "background 0.2s",
+                            }}
+                            disabled={followLoading}
+                            onClick={() => handleUnfollow(uname)}
+                          >
+                            Unfollow
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -398,7 +505,6 @@ const UserProfile = () => {
               )}
             </div>
             <hr style={{ borderColor: "#22283a", margin: "24px 0" }} />
-
             <div style={{ marginBottom: 8 }}>
               <h3 style={{ fontSize: 22, marginBottom: 12, fontWeight: 600 }}>
                 Find and Follow Users

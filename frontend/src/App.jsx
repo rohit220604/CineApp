@@ -24,10 +24,10 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/user-movies" element={<Profile />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/movies/:id" element={<MovieDetail />} />
-              <Route path="user-profile" element={<UserProfile />} />
+              <Route path="/user-profile" element={<UserProfile />} />
             </Routes>
           </main>
           <Footer />

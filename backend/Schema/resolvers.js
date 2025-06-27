@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const Review = require("../models/Review");
 const { sendOtpMail } = require("../utils/mailer");
@@ -244,6 +245,68 @@ module.exports = {
 
       me.followRequests.splice(idx, 1);
       await me.save();
+      return true;
+    },
+
+    unfollow: async (_, { username }, { user }) => {
+      if (!user || !user.id) throw new Error("Not authenticated");
+      if (!username) throw new Error("No username provided");
+    
+      // Query current user's document to get username
+      const currentUser = await User.findById(user.id);
+      if (!currentUser) throw new Error("Current user not found");
+    
+      const currentUsername = currentUser.username.trim().toLowerCase();
+      const targetUsername = username.trim().toLowerCase();
+    
+      if (currentUsername === targetUsername) throw new Error("Cannot unfollow yourself");
+    
+      const targetUser = await User.findOne({ username: targetUsername });
+      if (!targetUser) throw new Error("User not found");
+    
+      if (!currentUser.following.includes(targetUsername)) {
+        throw new Error("You are not following this user");
+      }
+    
+      // Remove targetUser from currentUser's following
+      currentUser.following = currentUser.following.filter(u => u !== targetUsername);
+      await currentUser.save();
+    
+      // Remove currentUser from targetUser's followers
+      targetUser.followers = targetUser.followers.filter(u => u !== currentUsername);
+      await targetUser.save();
+    
+      return true;
+    },
+    
+    removeFollower: async (_, { username }, { user }) => {
+      if (!user || !user.id) throw new Error("Not authenticated");
+      if (!username) throw new Error("No username provided");
+    
+      // Query current user's document to get username
+      const currentUser = await User.findById(user.id);
+      if (!currentUser) throw new Error("Current user not found");
+    
+      const currentUsername = currentUser.username.trim().toLowerCase();
+      const targetUsername = username.trim().toLowerCase();
+    
+      if (currentUsername === targetUsername) throw new Error("Cannot remove yourself");
+    
+      const targetUser = await User.findOne({ username: targetUsername });
+      if (!targetUser) throw new Error("User not found");
+    
+      if (!currentUser.followers.includes(targetUsername)) {
+        throw new Error("This user is not your follower");
+      }
+    
+      // Remove targetUser from currentUser's followers
+      currentUser.followers = currentUser.followers.filter(u => u !== targetUsername);
+      await currentUser.save();
+    
+      // Remove currentUser from targetUser's following
+      targetUser.following = targetUser.following.filter(u => u !== currentUsername);
+      await targetUser.save();
+    
       return true;
     },
   },

@@ -58,5 +58,7 @@ type Mutation {
   sendFollowRequest(username: String!): Boolean!
   acceptFollowRequest(username: String!): Boolean!
   rejectFollowRequest(username: String!): Boolean!
+  unfollow(username: String!): Boolean!
+  removeFollower(username: String!): Boolean!
 }
 `;
