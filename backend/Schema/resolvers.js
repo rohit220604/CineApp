@@ -62,6 +62,7 @@ module.exports = {
         throw new Error("You must be an approved follower to view these movies.");
       }
       return target.watchedMovies;
+      
     },
     
     userSavedMovies: async (_, { username }, { user }) => {
@@ -88,6 +89,19 @@ module.exports = {
       username: { $regex: query, $options: "i" }
       }).limit(10).select("_id username");
     },
+
+    userProfile: async (_, { username }, { dataSources }) => {
+      const user = await User.findOne({ username });
+      if (!user) throw new Error("User not found");
+      return {
+        username: user.username,
+        publicName: user.publicName,
+        followers: user.followers,
+        following: user.following,
+        savedMovies: user.savedMovies,
+        watchedMovies: user.watchedMovies,
+      };
+    },    
   },
 
   Mutation: {

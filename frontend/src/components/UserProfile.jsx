@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Helper for GraphQL fetch
 const fetchGraphQL = async (query, variables = {}, token = null) => {
@@ -49,7 +50,6 @@ const REJECT_FOLLOW_REQUEST = `
   }
 `;
 
-// --- Unfollow and Remove Follower Mutations ---
 const UNFOLLOW_MUTATION = `
   mutation Unfollow($username: String!) {
     unfollow(username: $username)
@@ -62,7 +62,6 @@ const REMOVE_FOLLOWER_MUTATION = `
   }
 `;
 
-// --- User search query ---
 const SEARCH_USERS_QUERY = `
   query SearchUsers($query: String!) {
     searchUsers(query: $query) {
@@ -84,8 +83,9 @@ const UserProfile = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchTried, setSearchTried] = useState(false);
-  const [justAccepted, setJustAccepted] = useState([]); // Track usernames just accepted
+  const [justAccepted, setJustAccepted] = useState([]);
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   // Fetch user data and follow requests on mount
   const fetchAll = async () => {
@@ -108,7 +108,6 @@ const UserProfile = () => {
 
   useEffect(() => {
     fetchAll();
-    // eslint-disable-next-line
   }, [token]);
 
   // Handle follow by username
@@ -135,7 +134,7 @@ const UserProfile = () => {
       const res = await fetchGraphQL(ACCEPT_FOLLOW_REQUEST, { username }, token);
       if (res.errors) throw new Error(res.errors[0].message);
       setRequestMsg(`Accepted @${username}'s follow request.`);
-      setJustAccepted((prev) => [...prev, username]); // Mark for followback
+      setJustAccepted((prev) => [...prev, username]);
       await fetchAll();
     } catch (err) {
       setError(err.message || "Failed to accept request.");
@@ -168,7 +167,7 @@ const UserProfile = () => {
       if (res.errors) throw new Error(res.errors[0].message);
       setJustAccepted((prev) => prev.filter(u => u !== username));
       setSuccessMsg(`Followed back @${username}!`);
-      await fetchAll(); // <-- This ensures your following list updates!
+      await fetchAll();
     } catch (err) {
       setError(err.message || "Failed to follow back.");
     }
@@ -212,9 +211,9 @@ const UserProfile = () => {
     // eslint-disable-next-line
   }, [searchUsername]);
 
-  // --- Username click handler ---
+  // --- Username click handler for navigation ---
   const handleUsernameClick = (username) => {
-    setSearchUsername(username);
+    navigate(`/profile/${username}`);
   };
 
   // --- Unfollow someone you are following ---
@@ -249,7 +248,6 @@ const UserProfile = () => {
     setFollowLoading(false);
   };
 
-  // Followers/following as usernames
   const followers = user?.followers || [];
   const following = user?.following || [];
 
@@ -304,7 +302,15 @@ const UserProfile = () => {
                           minHeight: 32,
                         }}
                       >
-                        <span style={{ color: "#8bb4ff", minWidth: 120, fontSize: 15 }}>
+                        <span
+                          style={{
+                            color: "#8bb4ff",
+                            minWidth: 120,
+                            fontSize: 15,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => handleUsernameClick(uname)}
+                        >
                           @{uname}
                         </span>
                         {uname !== user.username && (
@@ -348,7 +354,15 @@ const UserProfile = () => {
                           minHeight: 32,
                         }}
                       >
-                        <span style={{ color: "#8bb4ff", minWidth: 120, fontSize: 15 }}>
+                        <span
+                          style={{
+                            color: "#8bb4ff",
+                            minWidth: 120,
+                            fontSize: 15,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => handleUsernameClick(uname)}
+                        >
                           @{uname}
                         </span>
                         {uname !== user.username && (
@@ -410,7 +424,15 @@ const UserProfile = () => {
                       }}
                     >
                       <span style={{ fontSize: 16 }}>
-                        <span style={{ color: "#8bb4ff" }}>@{uname}</span>
+                        <span
+                          style={{
+                            color: "#8bb4ff",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => handleUsernameClick(uname)}
+                        >
+                          @{uname}
+                        </span>
                       </span>
                       <span>
                         <button
@@ -462,7 +484,14 @@ const UserProfile = () => {
                       .filter(uname => !following.includes(uname))
                       .map((uname) => (
                         <li key={uname} style={{ marginBottom: 10, display: "flex", alignItems: "center" }}>
-                          <span style={{ color: "#8bb4ff", fontSize: 16 }}>
+                          <span
+                            style={{
+                              color: "#8bb4ff",
+                              fontSize: 16,
+                              cursor: "pointer",
+                            }}
+                            onClick={() => handleUsernameClick(uname)}
+                          >
                             @{uname}
                           </span>
                           <button

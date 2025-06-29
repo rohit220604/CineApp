@@ -11,6 +11,8 @@ import AboutUs from "./components/AboutUs";
 import MovieDetail from "./components/MovieDetail";
 import UserProfile from "./components/UserProfile";
 import Recommended from "./components/Recommended";
+import Follower from "./components/Followers";
+import NotFound from "./components/NotFound";
 
 function App() {
   return (
@@ -28,6 +30,9 @@ function App() {
               <Route path="/about" element={<AboutUs />} />
               <Route path="/movies/:id" element={<MovieDetail />} />
               <Route path="/user-profile" element={<UserProfile />} />
+              <Route path="/recommended" element={<Recommended />} />
+              <Route path="/profile/:username" element={<Follower />} />
+              <Route path="*" element={<NotFound />} />   
             </Routes>
           </main>
           <Footer />

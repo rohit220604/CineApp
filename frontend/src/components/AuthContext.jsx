@@ -30,6 +30,7 @@ const fetchUserProfile = async (token) => {
             me {
                 username
                 email
+                following
             }
             }
         `,

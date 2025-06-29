@@ -42,6 +42,7 @@ type Query {
   userSavedMovies(username: String!): [Int!]!
   isUsernameAvailable(username: String!): Boolean!
   searchUsers(query: String!): [User!]!
+  userProfile(username: String!): User
 }
 
 type Mutation {
