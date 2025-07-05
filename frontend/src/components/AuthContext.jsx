@@ -4,63 +4,62 @@ import { useNavigate } from "react-router-dom";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-const [user, setUser] = useState(null);
-const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-// On mount, check for token and fetch user profile
-useEffect(() => {
+  // On mount, check for token and fetch user profile
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-    fetchUserProfile(token);
+      fetchUserProfile(token);
     }
-}, []);
+  }, []);
 
-// Fetch user profile from backend
-const fetchUserProfile = async (token) => {
+  const fetchUserProfile = async (token) => {
     try {
-    const res = await fetch("http://localhost:4000/graphql", {
+      const res = await fetch("http://localhost:4000/graphql", {
         method: "POST",
         headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-        query: `
+          query: `
             query {
-            me {
+              me {
                 username
                 email
                 following
+              }
             }
-            }
-        `,
+          `,
         }),
-    });
-    const data = await res.json();
-    if (data?.data?.me) {
+      });
+      const data = await res.json();
+      if (data?.data?.me) {
         setUser(data.data.me);
-    }
+      }
     } catch (error) {
-    setUser(null);
+      setUser(null);
     }
-};
+  };
 
-// Handle login
-const login = (token) => {
+  // Handle login
+  const login = (token) => {
     localStorage.setItem("token", token);
     fetchUserProfile(token);
-};
+  };
 
-// Handle logout
-const logout = () => {
+  // Handle logout
+  const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
     navigate("/login");
-};
+  };
 
-return (
+  return (
     <AuthContext.Provider value={{ user, login, logout }}>
-    {children}
+      {children}
     </AuthContext.Provider>
-);
+  );
 };

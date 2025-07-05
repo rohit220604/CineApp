@@ -1,23 +1,30 @@
 require("dotenv").config();
+
 const express = require("express");
 const { ApolloServer } = require("apollo-server-express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const typeDefs = require("./Schema/typeDefs");
 const resolvers = require("./Schema/resolvers");
-const jwt = require("jsonwebtoken");
 
 // Importing models
 const User = require("./models/User");
 const Review = require("./models/Review");
 
+// Import Google OAuth setup
+const { setupGoogleAuthRoutes } = require("./utils/googleAuth");
+
 const app = express();
 
-//CORS configuration
+// CORS configuration
 app.use(cors({
   origin: true,
-  credentials: true 
+  credentials: true
 }));
+
+// Google OAuth routes
+setupGoogleAuthRoutes(app);
 
 const getUser = (token) => {
   try {

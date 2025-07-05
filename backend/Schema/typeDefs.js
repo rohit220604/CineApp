@@ -46,7 +46,7 @@ type Query {
 }
 
 type Mutation {
-  register(name: String!, email: String!, password: String!, username: String!): Boolean!
+  register(publicName: String!, email: String!, password: String!, username: String!): Boolean!
   verifyOTP(email: String!, otp: String!): Boolean!
   login(email: String!, password: String!): AuthPayload!
   forgotPassword(email: String!): Boolean!
@@ -61,5 +61,6 @@ type Mutation {
   rejectFollowRequest(username: String!): Boolean!
   unfollow(username: String!): Boolean!
   removeFollower(username: String!): Boolean!
+  googleLogin(token: String!): AuthPayload!
 }
 `;

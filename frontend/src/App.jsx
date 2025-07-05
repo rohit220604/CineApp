@@ -13,6 +13,7 @@ import UserProfile from "./components/UserProfile";
 import Recommended from "./components/Recommended";
 import Follower from "./components/Followers";
 import NotFound from "./components/NotFound";
+import OAuthSuccess from "./components/OAuthSuccess";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="/recommended" element={<Recommended />} />
               <Route path="/profile/:username" element={<Follower />} />
               <Route path="*" element={<NotFound />} />   
+              <Route path="/oauth-success" element={<OAuthSuccess />} />
             </Routes>
           </main>
           <Footer />

@@ -4,7 +4,9 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const Review = require("../models/Review");
 const { sendOtpMail } = require("../utils/mailer");
+const { OAuth2Client } = require('google-auth-library');
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports = {
@@ -322,6 +324,29 @@ module.exports = {
       await targetUser.save();
     
       return true;
+    },
+    googleLogin: async (_, { token }) => {
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      let user = await User.findOne({ email: payload.email });
+      if (!user) {
+        let baseUsername = (payload.name || payload.email.split('@')[0]).replace(/\W/g, '').toLowerCase();
+        let username = baseUsername;
+        let count = 1;
+        while (await User.findOne({ username })) {
+          username = `${baseUsername}${count++}`;
+        }
+        user = await User.create({
+          username,
+          email: payload.email,
+          isVerified: true,
+        });
+      }
+      const jwtToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
+      return { token: jwtToken, user };
     },
   },
 
