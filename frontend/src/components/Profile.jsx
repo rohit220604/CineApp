@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "./AuthContext";
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const Section = ({ title, children }) => (
   <div className="mb-8">
@@ -49,7 +50,7 @@ const Profile = () => {
       setError("");
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:4000/graphql", {
+        const response = await fetch(`${backendUrl}/graphql`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -131,7 +132,7 @@ const Profile = () => {
   // Remove from Saved
   const removeFromSaved = async (tmdbId) => {
     const token = localStorage.getItem("token");
-    await fetch("http://localhost:4000/graphql", {
+    await fetch(`${backendUrl}/graphql`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -155,7 +156,7 @@ const Profile = () => {
   // Remove from Watched
   const removeFromWatched = async (tmdbId) => {
     const token = localStorage.getItem("token");
-    await fetch("http://localhost:4000/graphql", {
+    await fetch(`${backendUrl}/graphql`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

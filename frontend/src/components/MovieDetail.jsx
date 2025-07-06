@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // Star colors
 const STAR_COLOR_FILLED = "#F2C265";
 const STAR_COLOR_EMPTY = "#a9a9a9";
-
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 // Helper to render stars for a given rating
@@ -52,11 +52,10 @@ function MovieDetail() {
       .then(setMovie);
 
     fetchReviews();
-    // eslint-disable-next-line
   }, [id]);
 
   const fetchReviews = () => {
-    fetch("http://localhost:4000/graphql", {
+    fetch(`${backendUrl}/graphql`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -96,7 +95,7 @@ function MovieDetail() {
     }
     setSubmitting(true);
     setSubmitMsg("");
-    const res = await fetch("http://localhost:4000/graphql", {
+    const res = await fetch(`${backendUrl}/graphql`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

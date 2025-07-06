@@ -34,8 +34,6 @@ passport.deserializeUser((id, done) => User.findById(id, done));
 
 function setupGoogleAuthRoutes(app) {
   app.use(passport.initialize());
-  // If you want to use sessions, uncomment the next line and add express-session middleware in index.js
-  // app.use(passport.session());
 
   app.get('/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] , session: false})
@@ -45,7 +43,7 @@ function setupGoogleAuthRoutes(app) {
     passport.authenticate('google', { failureRedirect: '/login' ,session: false}),
     (req, res) => {
       const token = jwt.sign({ id: req.user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-      res.redirect(`http://localhost:5173/oauth-success?token=${token}`);
+      res.redirect(`${process.env.CLIENT_URL}/oauth-success?token=${token}`);
     }
   );
 }

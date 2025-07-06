@@ -6,6 +6,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // On mount, check for token and fetch user profile
   useEffect(() => {
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (token) => {
     try {
-      const res = await fetch("http://localhost:4000/graphql", {
+      const res = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

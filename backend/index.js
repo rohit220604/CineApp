@@ -19,7 +19,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: true,
+  origin: process.env.CLIENT_URL,
   credentials: true
 }));
 
@@ -65,7 +65,7 @@ async function startServer() {
     process.exit(1);
   }
 
-  const PORT = process.env.PORT || 4000;
+  const PORT = process.env.PORT;
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}${server.graphqlPath}`);
   });

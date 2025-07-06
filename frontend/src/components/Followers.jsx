@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AuthContext } from "./AuthContext"; // <-- Adjust path if needed
+import { AuthContext } from "./AuthContext"; 
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // GraphQL fetch helper
 const fetchGraphQL = async (query, variables = {}, token = null) => {
-  const res = await fetch("http://localhost:4000/graphql", {
+  const res = await fetch(`${backendUrl}/graphql`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

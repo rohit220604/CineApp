@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 // Helper for GraphQL fetch
 const fetchGraphQL = async (query, variables = {}, token = null) => {
-  const res = await fetch("http://localhost:4000/graphql", {
+  const res = await fetch(`${backendUrl}/graphql`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -208,7 +210,6 @@ const UserProfile = () => {
       setSearchResults([]);
       setSearchTried(false);
     }
-    // eslint-disable-next-line
   }, [searchUsername]);
 
   // --- Username click handler for navigation ---

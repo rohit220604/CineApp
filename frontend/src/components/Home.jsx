@@ -15,6 +15,7 @@ const Home = () => {
   const loader = useRef(null);
   const [watchedMovies, setWatchedMovies] = useState(new Set());
   const [savedMovies, setSavedMovies] = useState(new Set());
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Check if user is logged in
   const isLoggedIn = !!localStorage.getItem("token");
@@ -67,7 +68,7 @@ const Home = () => {
     setActionStatus((prev) => ({ ...prev, [movieId]: "Loading..." }));
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:4000/graphql", {
+      const res = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,7 +126,7 @@ const Home = () => {
   const handleUnsave = async (movie) => {
     const token = localStorage.getItem("token");
     try {
-      await fetch("http://localhost:4000/graphql", {
+      await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -174,7 +175,7 @@ const Home = () => {
   const removeFromWatched = async (movie) => {
     const token = localStorage.getItem("token");
     try {
-      await fetch("http://localhost:4000/graphql", {
+      await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

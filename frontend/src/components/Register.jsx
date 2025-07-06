@@ -17,6 +17,7 @@ const Register = () => {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const navigate = useNavigate();
   const debounceRef = useRef();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Debounced username check
   useEffect(() => {
@@ -31,12 +32,11 @@ const Register = () => {
     debounceRef.current = setTimeout(() => {
       checkUsernameAvailability(form.username);
     }, 500); // 500ms debounce
-    // eslint-disable-next-line
   }, [form.username]);
 
   const checkUsernameAvailability = async (username) => {
     try {
-      const response = await fetch("http://localhost:4000/graphql", {
+      const response = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,7 +82,7 @@ const Register = () => {
       return;
     }
     try {
-      const response = await fetch("http://localhost:4000/graphql", {
+      const response = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -121,7 +121,7 @@ const Register = () => {
     setError("");
     setInfo("");
     try {
-      const response = await fetch("http://localhost:4000/graphql", {
+      const response = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

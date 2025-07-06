@@ -9,10 +9,11 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Trigger Google OAuth flow
   const handleGoogleLogin = () => {
-    window.open("http://localhost:4000/auth/google", "_self");
+    window.open(`${backendUrl}/auth/google`, "_self");
   };
 
   const handleSubmit = async (e) => {
@@ -20,7 +21,7 @@ const Login = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:4000/graphql", {
+      const response = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

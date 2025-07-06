@@ -8,6 +8,7 @@ const ForgotPassword = () => {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const navigate = useNavigate();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -19,7 +20,7 @@ const ForgotPassword = () => {
     setError("");
     setInfo("");
     try {
-      const response = await fetch("http://localhost:4000/graphql", {
+      const response = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,7 +59,7 @@ const ForgotPassword = () => {
       return;
     }
     try {
-      const response = await fetch("http://localhost:4000/graphql", {
+      const response = await fetch(`${backendUrl}/graphql`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
