@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AuthContext } from "./AuthContext"; 
 
 const Navbar = () => {
@@ -35,6 +35,25 @@ const Navbar = () => {
             Home
           </Link>
         </div>
+        {/* Recommended Link - only when logged in */}
+        {user && (
+        <div className="ml-8">
+          <Link
+            to="/recommended"
+            className="flex items-center text-base font-medium text-gray-200 hover:text-blue-400 transition px-3 py-1 rounded hover:bg-[#1e2636]"
+          >
+            <svg
+              className="w-5 h-5 mr-1 text-blue-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <circle cx="10" cy="10" r="10" fill="#2563eb" />
+              <polygon points="8,6 15,10 8,14" fill="#fff" />
+            </svg>
+            Recommended
+          </Link>
+        </div>
+      )}
         <div className="ml-8">
           <Link
             to="/about"

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 // Star colors
 const STAR_COLOR_FILLED = "#F2C265";
@@ -45,6 +45,12 @@ function MovieDetail() {
   const LOAD_MORE_COUNT = 5;
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
+  // Save/Watched state
+  const [savedMovies, setSavedMovies] = useState(new Set());
+  const [watchedMovies, setWatchedMovies] = useState(new Set());
+  const [actionStatus, setActionStatus] = useState({});
+  const isLoggedIn = !!localStorage.getItem("token");
+
   // Fetch movie and reviews
   useEffect(() => {
     fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}`)
@@ -52,8 +58,17 @@ function MovieDetail() {
       .then(setMovie);
 
     fetchReviews();
-  }, [id]);
+    if (isLoggedIn) {
+      fetchSavedMovies();
+      fetchWatchedMovies();
+    } else {
+      setSavedMovies(new Set());
+      setWatchedMovies(new Set());
+    }
+    // eslint-disable-next-line
+  }, [id, isLoggedIn]);
 
+  // Fetch reviews
   const fetchReviews = () => {
     fetch(`${backendUrl}/graphql`, {
       method: "POST",
@@ -76,8 +91,180 @@ function MovieDetail() {
       .then(res => res.json())
       .then(data => {
         setReviews(data.data.reviewsForMovie);
-        setVisibleCount(INITIAL_COUNT); // Reset visible count when new reviews are fetched
+        setVisibleCount(INITIAL_COUNT);
       });
+  };
+
+  // Fetch saved movies
+  const fetchSavedMovies = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch(`${backendUrl}/graphql`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              mySavedMovies
+            }
+          `,
+        }),
+      });
+      const { data } = await res.json();
+      if (data && data.mySavedMovies) {
+        setSavedMovies(new Set(data.mySavedMovies));
+      }
+    } catch (err) {}
+  }, []);
+
+  // Fetch watched movies
+  const fetchWatchedMovies = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch(`${backendUrl}/graphql`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              myWatchedMovies
+            }
+          `,
+        }),
+      });
+      const { data } = await res.json();
+      if (data && data.myWatchedMovies) {
+        setWatchedMovies(new Set(data.myWatchedMovies));
+      }
+    } catch (err) {}
+  }, []);
+
+  // Backend action helper
+  const sendToBackend = async (mutation, variables, movieId, successMsg, refetchFn) => {
+    setActionStatus((prev) => ({ ...prev, [movieId]: "Loading..." }));
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${backendUrl}/graphql`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          query: mutation,
+          variables,
+        }),
+      });
+      const { data, errors } = await res.json();
+      if (errors && errors.length > 0) {
+        setActionStatus((prev) => ({
+          ...prev,
+          [movieId]: `Error: ${errors[0].message}`,
+        }));
+      } else {
+        setActionStatus((prev) => ({
+          ...prev,
+          [movieId]: successMsg,
+        }));
+        if (refetchFn) refetchFn();
+      }
+      setTimeout(() => {
+        setActionStatus((prev) => ({ ...prev, [movieId]: "" }));
+      }, 2000);
+    } catch (err) {
+      setActionStatus((prev) => ({
+        ...prev,
+        [movieId]: "Network error",
+      }));
+    }
+  };
+
+  // Save for later
+  const handleSave = (movie) => {
+    sendToBackend(
+      `mutation SaveForLater($tmdbId: Int!) {
+        saveForLater(tmdbId: $tmdbId)
+      }`,
+      {
+        tmdbId: movie.id,
+      },
+      movie.id,
+      "Saved!",
+      fetchSavedMovies
+    );
+  };
+
+  // Unsave a movie
+  const handleUnsave = async (movie) => {
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${backendUrl}/graphql`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            mutation($tmdbId: Int!) {
+              removeFromSaved(tmdbId: $tmdbId)
+            }
+          `,
+          variables: { tmdbId: movie.id },
+        }),
+      });
+      fetchSavedMovies();
+    } catch (error) {
+      console.error("Failed to unsave:", error);
+    }
+  };
+
+  // Mark as watched
+  const handleWatched = (movie) => {
+    sendToBackend(
+      `mutation MarkAsWatched($tmdbId: Int!) {
+        markAsWatched(tmdbId: $tmdbId)
+      }`,
+      {
+        tmdbId: movie.id,
+      },
+      movie.id,
+      "Marked as Watched!",
+      fetchWatchedMovies
+    );
+  };
+
+  // Unmark as Watched
+  const removeFromWatched = async (movie) => {
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${backendUrl}/graphql`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            mutation($tmdbId: Int!) {
+              removeFromWatched(tmdbId: $tmdbId)
+            }
+          `,
+          variables: { tmdbId: movie.id },
+        }),
+      });
+      fetchWatchedMovies();
+    } catch (error) {
+      console.error("Failed to remove from watched:", error);
+    }
   };
 
   // Handle review submission
@@ -135,11 +322,20 @@ function MovieDetail() {
     setVisibleCount((prev) => Math.min(prev + LOAD_MORE_COUNT, reviews.length));
   };
 
-  if (!movie) return (
-    <div className="bg-[#101624] min-h-screen flex items-center justify-center">
-      <div className="text-gray-300 text-lg">Loading...</div>
-    </div>
-  );
+  if (!movie)
+    return (
+      <div className="bg-[#101624] min-h-screen flex items-center justify-center">
+        <div className="text-gray-300 text-lg">Loading...</div>
+      </div>
+    );
+
+  // Construct a movie object for backend actions
+  const movieObj = {
+    id: movie.id,
+    title: movie.title,
+    poster_path: movie.poster_path,
+    release_date: movie.release_date,
+  };
 
   return (
     <div className="bg-[#101624] min-h-screen w-full p-0 m-0">
@@ -175,12 +371,53 @@ function MovieDetail() {
           <div className="text-gray-400 text-base mb-2">
             Genres:{" "}
             {movie.genres
-              ? movie.genres.map(g => g.name).join(", ")
+              ? movie.genres.map((g) => g.name).join(", ")
               : "N/A"}
           </div>
           <div className="text-gray-400 text-base mb-6">
             Runtime: {movie.runtime ? `${movie.runtime} min` : "N/A"}
           </div>
+          {/* Save/Watched Buttons */}
+          {isLoggedIn && (
+            <div className="flex gap-3 mb-4">
+              {savedMovies.has(movie.id) ? (
+                <button
+                  className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded transition text-sm"
+                  onClick={() => handleUnsave(movieObj)}
+                >
+                  Unsave
+                </button>
+              ) : (
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition text-sm"
+                  onClick={() => handleSave(movieObj)}
+                >
+                  Save
+                </button>
+              )}
+
+              {watchedMovies.has(movie.id) ? (
+                <button
+                  className="bg-yellow-700 hover:bg-yellow-800 text-white px-4 py-2 rounded transition text-sm"
+                  onClick={() => removeFromWatched(movieObj)}
+                >
+                  Unmark as Watched
+                </button>
+              ) : (
+                <button
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition text-sm"
+                  onClick={() => handleWatched(movieObj)}
+                >
+                  Watched
+                </button>
+              )}
+              <div className="min-w-[120px] flex items-center">
+                {actionStatus[movie.id] && (
+                  <span className="text-xs text-green-400">{actionStatus[movie.id]}</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {/* Add Review Section */}
