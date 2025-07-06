@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const Home = () => {
   const [movies, setMovies] = useState([]);
@@ -15,7 +16,6 @@ const Home = () => {
   const loader = useRef(null);
   const [watchedMovies, setWatchedMovies] = useState(new Set());
   const [savedMovies, setSavedMovies] = useState(new Set());
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Check if user is logged in
   const isLoggedIn = !!localStorage.getItem("token");
@@ -41,10 +41,68 @@ const Home = () => {
     setLoading(false);
   }, [page, loading, hasMore]);
 
+  // Fetch saved movies from backend
+  const fetchSavedMovies = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch(`${backendUrl}/graphql`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              mySavedMovies
+            }
+          `,
+        }),
+      });
+      const { data } = await res.json();
+      if (data && data.mySavedMovies) {
+        setSavedMovies(new Set(data.mySavedMovies));
+      }
+    } catch (err) {
+      // Handle error if needed
+    }
+  }, []);
+
+  // Fetch watched movies from backend
+  const fetchWatchedMovies = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch(`${backendUrl}/graphql`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              myWatchedMovies
+            }
+          `,
+        }),
+      });
+      const { data } = await res.json();
+      if (data && data.myWatchedMovies) {
+        setWatchedMovies(new Set(data.myWatchedMovies));
+      }
+    } catch (err) {
+      // Handle error if needed
+    }
+  }, []);
+
+  // Fetch movies on mount or page/search change
   useEffect(() => {
     if (!searching) fetchMovies();
-  }, [page, searching]);
+  }, [page, searching, fetchMovies]);
 
+  // Infinite scroll
   useEffect(() => {
     if (!hasMore || loading || searching) return;
     const observer = new window.IntersectionObserver(
@@ -63,8 +121,19 @@ const Home = () => {
     };
   }, [hasMore, loading, searching]);
 
+  // Fetch saved and watched movies on login/mount
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchSavedMovies();
+      fetchWatchedMovies();
+    } else {
+      setSavedMovies(new Set());
+      setWatchedMovies(new Set());
+    }
+  }, [isLoggedIn, fetchSavedMovies, fetchWatchedMovies]);
+
   // --- Backend Actions ---
-  const sendToBackend = async (mutation, variables, movieId, successMsg) => {
+  const sendToBackend = async (mutation, variables, movieId, successMsg, refetchFn) => {
     setActionStatus((prev) => ({ ...prev, [movieId]: "Loading..." }));
     const token = localStorage.getItem("token");
     try {
@@ -90,6 +159,7 @@ const Home = () => {
           ...prev,
           [movieId]: successMsg,
         }));
+        if (refetchFn) refetchFn();
       }
       setTimeout(() => {
         setActionStatus((prev) => ({ ...prev, [movieId]: "" }));
@@ -110,16 +180,11 @@ const Home = () => {
       }`,
       {
         tmdbId: movie.id,
-        title: movie.title,
-        poster: movie.poster_path
-          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          : "",
-        year: movie.release_date ? parseInt(movie.release_date.slice(0, 4)) : null,
       },
       movie.id,
-      "Saved!"
+      "Saved!",
+      fetchSavedMovies
     );
-    setSavedMovies(prev => new Set(prev).add(movie.id));
   };
 
   // Unsave a movie
@@ -141,11 +206,7 @@ const Home = () => {
           variables: { tmdbId: movie.id },
         }),
       });
-      setSavedMovies(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(movie.id);
-        return newSet;
-      });
+      fetchSavedMovies();
     } catch (error) {
       console.error("Failed to unsave:", error);
     }
@@ -159,16 +220,11 @@ const Home = () => {
       }`,
       {
         tmdbId: movie.id,
-        title: movie.title,
-        poster: movie.poster_path
-          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-          : "",
-        year: movie.release_date ? parseInt(movie.release_date.slice(0, 4)) : null,
       },
       movie.id,
-      "Marked as Watched!"
+      "Marked as Watched!",
+      fetchWatchedMovies
     );
-    setWatchedMovies(prev => new Set(prev).add(movie.id));
   };
 
   // Unmark as Watched
@@ -190,11 +246,7 @@ const Home = () => {
           variables: { tmdbId: movie.id },
         }),
       });
-      setWatchedMovies(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(movie.id);
-        return newSet;
-      });
+      fetchWatchedMovies();
     } catch (error) {
       console.error("Failed to remove from watched:", error);
     }
