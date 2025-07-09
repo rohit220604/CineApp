@@ -1,17 +1,31 @@
 
 # 🎬 CineApp
 
-CineApp is a full-stack social movie tracking web app. It uses **React + Vite** for the frontend and **Apollo backend (GraphQL)** with **Node.js + Express** for the backend. The app connects to **TMDB (The Movie Database)** to fetch real-time movie data. 
+![Vercel](https://img.shields.io/badge/Deployed-Vercel-brightgreen)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+
+[Live Demo](https://cine-app-phi.vercel.app) 🚀
+
+👉 **Tip:** Use Google login to sign up instantly — no manual OTP needed.
+
+
+CineApp is a full-stack social movie tracking web app. It uses **React + Vite** for the frontend and **Apollo backend (GraphQL)** with **Node.js + Express** for the backend. The app connects to **TMDB (The Movie Database)** to fetch real-time movie data.
 
 Users can:
-- Browse movies,
-- Save movies for later,
-- Mark movies as watched,
-- Write reviews,
-- Follow other users,
-- Control access to their watched and saved movies,
-- Register and verify accounts via OTP sent by email,
-- Reset passwords securely.
+- Browse movies
+- Save movies for later
+- Mark movies as watched
+- Get **personalized movie recommendations** based on saved and watched lists
+- Write reviews
+- **Login with Google OAuth**
+- Follow other users
+- Accept/reject follow requests
+- View followers and following
+- See followers’ saved and watched movies if approved
+- Control privacy of their lists
+- Register and verify accounts via OTP sent by email
+- Reset passwords securely
+- Use the live deployed version hosted on **Vercel** (frontend) and **Render** (backend)
 
 ---
 
@@ -27,6 +41,7 @@ Users can:
 - [Setup Instructions](#setup-instructions)
 - [Environment Variables](#environment-variables)
 - [API Keys](#api-keys)
+- [Deployment](#deployment)
 - [Contributing](#contributing)
 - [License](#license)
 - [Author](#author)
@@ -36,16 +51,19 @@ Users can:
 
 ## 🚀 Features
 
-- ✅ **TMDB Integration** – Fetch movies dynamically.
-- ✅ **Save For Later** – Save any movie to watch later.
-- ✅ **Mark As Watched** – Keep track of watched movies.
-- ✅ **Write Reviews** – Review watched movies.
-- ✅ **User Profiles** – Each user has a unique profile.
-- ✅ **Followers** – Follow other users, accept/reject requests.
-- ✅ **Privacy Control** – Only approved followers can view saved/watched movies.
-- ✅ **Email Verification** – Register and verify via OTP.
-- ✅ **Forgot Password** – Reset password securely via OTP.
-- ✅ **Search Users** – Find other users by username.
+- ✅ **TMDB Integration** – Fetch movies dynamically
+- ✅ **Save For Later** – Save any movie to watch later
+- ✅ **Mark As Watched** – Keep track of watched movies
+- ✅ **Personalized Recommendations** – Get recommended movies based on your activity
+- ✅ **Write Reviews** – Review watched movies
+- ✅ **User Profiles** – Each user has a unique profile
+- ✅ **Followers & Following** – Follow others, accept/reject requests
+- ✅ **Privacy Control** – Only approved followers can view saved/watched movies
+- ✅ **Google OAuth** – Secure login with your Google account
+- ✅ **Email Verification** – Register and verify via OTP
+- ✅ **Forgot Password** – Reset password securely via OTP
+- ✅ **Search Users** – Find other users by username
+- ✅ **Live Deployment** – Hosted on **Vercel** (frontend) and **Render** (backend)
 
 ---
 
@@ -56,7 +74,7 @@ Users can:
 | **Frontend** | React, Vite |
 | **Backend** | Node.js, Express, Apollo backend (GraphQL) |
 | **Database** | MongoDB with Mongoose |
-| **Authentication** | JWT, bcryptjs, OTP via nodemailer |
+| **Authentication** | JWT, bcryptjs, OTP via nodemailer, Google OAuth |
 | **API** | TMDB |
 
 ---
@@ -72,7 +90,7 @@ cineapp/
  │       │   ├── AuthContext.jsx
  │       │   ├── Followers.jsx
  │       │   ├── Footer.jsx
- │       │   ├── ForgotPassoword.jsx
+ │       │   ├── ForgotPassword.jsx
  │       │   ├── Home.jsx
  │       │   ├── Login.jsx
  │       │   ├── MovieDetail.jsx
@@ -90,7 +108,7 @@ cineapp/
  │   ├── models/            # Mongoose models
  │      ├── User.js
  │      └── Review.js
- │   ├── Schema/            # GraphQL schema
+ │   ├── Schema/            # GraphQL schema and resolvers
  │      ├── resolvers.js
  │      └── typeDefs.js
  │   ├── utils/             # Utility modules (e.g., mailer)
@@ -182,12 +200,17 @@ MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 EMAIL_USER=your_email@example.com
 EMAIL_PASS=your_email_password
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+CLIENT_URL=http://localhost:5173
+PORT=4000
 ```
 
 Create `.env` in `frontend/`:
 
 ```
 VITE_TMDB_API_KEY=your_tmdb_api_key
+VITE_BACKEND_URL=http://localhost:4000
 ```
 
 ### 4️⃣ Run Backend
@@ -207,8 +230,18 @@ npm run dev
 ## 🔑 API Keys
 
 - **TMDB API Key:** Required for fetching movies.
-  - [TMDB](https://www.themoviedb.org/) → Create account → Get API key.
-  - Add to `frontend/.env`.
+  - [TMDB](https://www.themoviedb.org/) → Create account → Get API key → Add to `frontend/.env`.
+
+- **Google OAuth Credentials:** Required for Google login.
+  - [Google Cloud Console](https://console.cloud.google.com/) → Create a project → Enable OAuth consent screen → Create OAuth 2.0 Client ID → Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to `backend/.env`.
+
+
+---
+
+## 🚀 Deployment
+
+- **Frontend:** [https://cine-app-phi.vercel.app](https://cine-app-phi.vercel.app)
+- **Backend:** Hosted securely on **Render**
 
 ---
 
